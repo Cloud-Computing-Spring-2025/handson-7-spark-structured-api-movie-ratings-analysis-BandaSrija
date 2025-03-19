@@ -1,5 +1,44 @@
 # Movie Ratings Analysis
 
+## **Overview**
+
+In this assignment, you will leverage Spark Structured APIs to analyze a dataset containing movie ratings and streaming data. The goal is to extract insights into binge-watching behavior, user churn risk, and trends in movie watching across years. Using the power of Spark, you will perform data transformations, aggregations, and generate insights to help understand movie consumption patterns.
+
+## **Objectives**
+
+By the end of this assignment, you should be able to:
+
+1. **Data Loading and Preparation**: Import and preprocess movie ratings data using Spark Structured APIs.
+2. **Data Analysis**: Perform complex queries to identify patterns in binge-watching behavior and churn risks.
+3. **Insight Generation**: Derive actionable insights from movie consumption trends across different years.
+
+## **Dataset Explanation**
+
+### **Dataset: Advanced Movie Ratings & Streaming Trends**
+
+You will work with a dataset containing information about **100+ users** who rated movies across various streaming platforms. The dataset includes the following columns:
+
+| **Column Name**         | **Data Type**  | **Description** |
+|-------------------------|---------------|----------------|
+| **UserID**             | Integer       | Unique identifier for a user |
+| **MovieID**            | Integer       | Unique identifier for a movie |
+| **MovieTitle**         | String        | Name of the movie |
+| **Genre**             | String        | Movie genre (e.g., Action, Comedy, Drama) |
+| **Rating**            | Float         | User rating (1.0 to 5.0) |
+| **ReviewCount**       | Integer       | Total reviews given by the user |
+| **WatchedYear**       | Integer       | Year when the movie was watched |
+| **UserLocation**      | String        | User's country |
+| **AgeGroup**          | String        | Age category (Teen, Adult, Senior) |
+| **StreamingPlatform** | String        | Platform where the movie was watched |
+| **WatchTime**        | Integer       | Total watch time in minutes |
+| **IsBingeWatched**    | Boolean       | True if the user watched 3+ movies in a day |
+| **SubscriptionStatus** | String        | Subscription status (Active, Canceled) |
+
+### **Sample Data**
+
+Below is a snippet of the `movie_ratings_data.csv` to illustrate the data structure. Ensure your dataset contains at least 100 records for meaningful analysis.
+
+
 ## **Prerequisites**
 
 Before starting the assignment, ensure you have the following software installed and properly configured on your machine:
@@ -50,12 +89,6 @@ MovieRatingsAnalysis/
 ├── docker-compose.yml
 └── README.md
 ```
-
-
-
-
-
-
 
 
 
