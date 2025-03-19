@@ -1,57 +1,61 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count
 
-def initialize_spark(app_name="Task3_Trend_Analysis"):
+def create_spark_session(app_name="Task3_Movie_Watching_Trends"):
     """
-    Initialize and return a SparkSession.
+    Create and return a SparkSession instance.
     """
-    spark = SparkSession.builder \
-        .appName(app_name) \
-        .getOrCreate()
-    return spark
+    return SparkSession.builder.appName(app_name).getOrCreate()
 
-def load_data(spark, file_path):
+def load_movie_ratings(spark, file_path):
     """
-    Load the movie ratings data from a CSV file into a Spark DataFrame.
+    Load movie ratings dataset from a CSV file into a Spark DataFrame.
     """
-    schema = """
+    schema_definition = """
         UserID INT, MovieID INT, MovieTitle STRING, Genre STRING, Rating FLOAT, ReviewCount INT, 
         WatchedYear INT, UserLocation STRING, AgeGroup STRING, StreamingPlatform STRING, 
         WatchTime INT, IsBingeWatched BOOLEAN, SubscriptionStatus STRING
     """
-    df = spark.read.csv(file_path, header=True, schema=schema)
-    return df
+    return spark.read.csv(file_path, header=True, schema=schema_definition)
 
-def analyze_movie_watching_trends(df):
+def extract_movie_trends(df):
     """
-    Analyze trends in movie watching over the years.
+    Analyze the movie watching trends based on the number of movies watched each year.
+    """
+    # Group data by the year movies were watched and count the number of movies watched per year
+    trends_by_year = df.groupBy("WatchedYear").agg(count("MovieID").alias("MoviesWatched"))
+    
+    # Order the results by the watched year for trend analysis
+    trends_by_year = trends_by_year.orderBy("WatchedYear")
+    
+    # Rename columns to match the desired output format
+    trends_by_year = trends_by_year.select(
+        col("WatchedYear").alias("Watched Year"),
+        col("MoviesWatched").alias("Movies Watched")
+    )
+    
+    return trends_by_year
 
-    TODO: Implement the following steps:
-    1. Group by `WatchedYear` and count the number of movies watched.
-    2. Order the results by `WatchedYear` to identify trends.
+def save_trends_to_csv(result_df, output_path):
     """
-    pass  # Remove this line after implementation
-
-def write_output(result_df, output_path):
-    """
-    Write the result DataFrame to a CSV file.
+    Save the resulting trend analysis DataFrame to a CSV file.
     """
     result_df.coalesce(1).write.csv(output_path, header=True, mode='overwrite')
 
-def main():
+def run_analysis():
     """
-    Main function to execute Task 3.
+    Main function to execute Task 3 - Movie Watching Trends Analysis.
     """
-    spark = initialize_spark()
+    spark = create_spark_session()
 
-    input_file = "/workspaces/MovieRatingsAnalysis/input/movie_ratings_data.csv"
-    output_file = "/workspaces/MovieRatingsAnalysis/outputs/movie_watching_trends.csv"
+    input_file_path = "/workspaces/handson-7-spark-structured-api-movie-ratings-analysis-BandaSrija/input/movie_ratings_data.csv"
+    output_file_path = "/workspaces/handson-7-spark-structured-api-movie-ratings-analysis-BandaSrija/Outputs/movie_watching_trends.csv"
 
-    df = load_data(spark, input_file)
-    result_df = analyze_movie_watching_trends(df)  # Call function here
-    write_output(result_df, output_file)
+    movie_data = load_movie_ratings(spark, input_file_path)
+    trend_analysis_result = extract_movie_trends(movie_data)  # Perform trend analysis
+    save_trends_to_csv(trend_analysis_result, output_file_path)
 
     spark.stop()
 
 if __name__ == "__main__":
-    main()
+    run_analysis()

@@ -1,59 +1,67 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, count, round as spark_round
+from pyspark.sql.functions import col, count, round as pyspark_round
 
-def initialize_spark(app_name="Task1_Binge_Watching_Patterns"):
+def create_spark_session(app_name="Task1_Binge_Watching_Patterns"):
     """
-    Initialize and return a SparkSession.
+    Creates and returns a SparkSession instance.
     """
-    spark = SparkSession.builder \
-        .appName(app_name) \
-        .getOrCreate()
-    return spark
+    return SparkSession.builder.appName(app_name).getOrCreate()
 
-def load_data(spark, file_path):
+def load_movie_data(spark, file_path):
     """
-    Load the movie ratings data from a CSV file into a Spark DataFrame.
+    Load the movie ratings dataset from the specified CSV file into a Spark DataFrame.
     """
-    schema = """
+    schema_definition = """
         UserID INT, MovieID INT, MovieTitle STRING, Genre STRING, Rating FLOAT, ReviewCount INT, 
         WatchedYear INT, UserLocation STRING, AgeGroup STRING, StreamingPlatform STRING, 
         WatchTime INT, IsBingeWatched BOOLEAN, SubscriptionStatus STRING
     """
-    df = spark.read.csv(file_path, header=True, schema=schema)
-    return df
+    return spark.read.csv(file_path, header=True, schema=schema_definition)
 
-def detect_binge_watching_patterns(df):
+def analyze_binge_watching(df):
     """
-    Identify the percentage of users in each age group who binge-watch movies.
+    Calculate the percentage of binge watchers in each age group.
 
-    TODO: Implement the following steps:
-    1. Filter users who have `IsBingeWatched = True`.
-    2. Group by `AgeGroup` and count the number of binge-watchers.
-    3. Count the total number of users in each age group.
-    4. Calculate the binge-watching percentage for each age group.
+    Steps:
+    1. Filter users with `IsBingeWatched = True`.
+    2. Count binge-watchers and total users in each age group.
+    3. Calculate the binge-watching percentage for each group.
     """
-    pass  # Remove this line after implementation
+    # Get total number of unique users per age group
+    total_users_by_group = df.select("UserID", "AgeGroup").dropDuplicates().groupBy("AgeGroup").count().withColumnRenamed("count", "TotalUsers")
+    
+    # Get the count of binge-watchers in each age group
+    binge_watchers_by_group = df.filter(col("IsBingeWatched") == True).select("UserID", "AgeGroup").dropDuplicates().groupBy("AgeGroup").count().withColumnRenamed("count", "BingeWatchers")
+    
+    # Combine the two DataFrames and calculate the percentage
+    merged_data = binge_watchers_by_group.join(total_users_by_group, "AgeGroup")
+    merged_data = merged_data.withColumn("Percentage", pyspark_round((col("BingeWatchers") / col("TotalUsers") * 100), 2))
+    
+    # Select and reorder columns for final output
+    final_result = merged_data.select("AgeGroup", "BingeWatchers", "Percentage")
+    
+    return final_result
 
-def write_output(result_df, output_path):
+def save_binge_watch_results(df, output_path):
     """
-    Write the result DataFrame to a CSV file.
+    Save the output DataFrame to a CSV file.
     """
-    result_df.coalesce(1).write.csv(output_path, header=True, mode='overwrite')
+    df.coalesce(1).write.csv(output_path, header=True, mode='overwrite')
 
-def main():
+def execute_task():
     """
-    Main function to execute Task 1.
+    Main function to run the binge-watching analysis task.
     """
-    spark = initialize_spark()
+    spark = create_spark_session()
 
-    input_file = "/workspaces/MovieRatingsAnalysis/input/movie_ratings_data.csv"
-    output_file = "/workspaces/MovieRatingsAnalysis/outputs/binge_watching_patterns.csv"
+    input_data_file = "/workspaces/handson-7-spark-structured-api-movie-ratings-analysis-BandaSrija/input/movie_ratings_data.csv"
+    output_data_file = "/workspaces/handson-7-spark-structured-api-movie-ratings-analysis-BandaSrija/Outputs/binge_watching_patterns.csv"
 
-    df = load_data(spark, input_file)
-    result_df = detect_binge_watching_patterns(df)  # Call function here
-    write_output(result_df, output_file)
+    movie_data = load_movie_data(spark, input_data_file)
+    result_data = analyze_binge_watching(movie_data)  # Perform analysis here
+    save_binge_watch_results(result_data, output_data_file)
 
     spark.stop()
 
 if __name__ == "__main__":
-    main()
+    execute_task()
